@@ -1,9 +1,13 @@
+import logging
+
 from rest_framework import viewsets, permissions, authentication, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from task.models import Task
 from task.serializers import TaskSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -14,9 +18,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         task = self.get_object()
-        if task.status != 'completed':
+        if task.status != task.STATUS_COMPLETED:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        task.check_status_to_delete()
+        task.soft_delete()
+        logger.info(f"Задача удалена пользователем {self.request.user.username}: {task.title}")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def perform_update(self, serializer):
@@ -30,3 +35,5 @@ class TaskViewSet(viewsets.ModelViewSet):
                 raise ValidationError(str(e))
 
         serializer.save()
+        logger.info(
+            f"Задача обновлена пользователем {self.request.user.username}: {instance.title}, Новый статус: {new_status}")

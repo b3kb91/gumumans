@@ -27,8 +27,8 @@ class Task(models.Model):
         return self.title
 
     # soft_delete
-    def check_status_to_delete(self):
-        if self.status == 'completed':
+    def soft_delete(self):
+        if self.status == self.STATUS_COMPLETED:
             self.is_deleted = True
             self.save()
 
@@ -40,10 +40,10 @@ class Task(models.Model):
             self.STATUS_COMPLETED: []
         }
         if new_status not in allowed_transitions[self.status]:
-            raise ValueError(f"Нельзя сменить статус с '{self.get_status_display()}' на '{dict(self.STATUS_CHOICES).get(new_status)}'")
+            raise ValueError(
+                f"Нельзя сменить статус с '{self.get_status_display()}' на '{dict(self.STATUS_CHOICES).get(new_status)}'")
         self.status = new_status
         self.save()
-
 
     class Meta:
         db_table = 'task'
